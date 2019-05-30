@@ -1,0 +1,14 @@
+# Eclipse
+.classpath
+.project
+.settings
+
+# IntelliJ
+.idea
+*.iml
+*.iws
+
+# Build
+build
+dist
+reports
