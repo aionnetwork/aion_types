@@ -11,6 +11,6 @@ public final class ByteUtil {
         for (byte b : bytes) {
             hexString.append(String.format("%02X", b));
         }
-        return hexString.toString();
+        return hexString.toString().toLowerCase();
     }
 }
