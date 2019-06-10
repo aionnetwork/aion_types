@@ -1,3 +1,3 @@
 module aion.types {
-    exports org.aion.aion_types;
+    exports org.aion.types;
 }

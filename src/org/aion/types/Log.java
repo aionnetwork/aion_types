@@ -1,10 +1,10 @@
-package org.aion.aion_types;
+package org.aion.types;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.aion.aion_types.internal_util.ByteUtil;
+import org.aion.types.internal_util.ByteUtil;
 
 /**
  * A log holds an address and some data, and optionally may associate topics with this data.

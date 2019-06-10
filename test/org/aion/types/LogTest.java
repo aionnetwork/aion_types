@@ -1,4 +1,4 @@
-package org.aion.aion_types;
+package org.aion.types;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;

@@ -1,4 +1,4 @@
-package org.aion.aion_types.internal_util;
+package org.aion.types.internal_util;
 
 public final class ByteUtil {
 

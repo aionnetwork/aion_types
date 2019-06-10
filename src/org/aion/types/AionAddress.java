@@ -1,7 +1,7 @@
-package org.aion.aion_types;
+package org.aion.types;
 
 import java.util.Arrays;
-import org.aion.aion_types.internal_util.ByteUtil;
+import org.aion.types.internal_util.ByteUtil;
 
 /**
  * Represents an address of a contract or account in the Aion Network.
