@@ -6,7 +6,7 @@ import org.aion.types.internal_util.ByteUtil;
 /**
  * Represents an address of a contract or account in the Aion Network.
  */
-public class AionAddress {
+public final class AionAddress {
 
     /**
      * The length of an address.
