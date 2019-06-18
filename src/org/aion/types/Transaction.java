@@ -30,14 +30,10 @@ public final class Transaction {
         , BigInteger nonce
         , long energyPrice
         , long energyLimit
-        , boolean isCreate
         , byte[] transactionData
     ) {
         if (null == senderAddress) {
             throw new NullPointerException("No sender");
-        }
-        if (null == destinationAddress) {
-            throw new NullPointerException("No destination");
         }
         if (null == transactionHash) {
             throw new NullPointerException("No transaction hash");
@@ -72,7 +68,7 @@ public final class Transaction {
         this.nonce = nonce;
         this.energyPrice = energyPrice;
         this.energyLimit = energyLimit;
-        this.isCreate = isCreate;
+        this.isCreate = (destinationAddress == null);
         this.transactionData = new byte[transactionData.length];
         System.arraycopy(transactionData, 0, this.transactionData, 0, transactionData.length);
     }
