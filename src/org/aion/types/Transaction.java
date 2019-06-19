@@ -23,14 +23,15 @@ public final class Transaction {
     public final boolean isCreate;
     private final byte[] transactionData;
 
-    public Transaction(AionAddress senderAddress
+    private Transaction(AionAddress senderAddress
         , AionAddress destinationAddress
         , byte[] transactionHash
         , BigInteger value
         , BigInteger nonce
-        , long energyPrice
         , long energyLimit
+        , long energyPrice
         , byte[] transactionData
+        , boolean isCreate
     ) {
         if (null == senderAddress) {
             throw new NullPointerException("No sender");
@@ -68,9 +69,45 @@ public final class Transaction {
         this.nonce = nonce;
         this.energyPrice = energyPrice;
         this.energyLimit = energyLimit;
-        this.isCreate = (destinationAddress == null);
+        this.isCreate = isCreate;
         this.transactionData = new byte[transactionData.length];
         System.arraycopy(transactionData, 0, this.transactionData, 0, transactionData.length);
+    }
+
+    /**
+     * Constructs a new transaction that will attempt to create/deploy a new contract.
+     *
+     * @param sender The sender of the transaction.
+     * @param senderNonce The nonce of the sender.
+     * @param value The amount of value to be transferred from the sender to the destination.
+     * @param data The transaction data.
+     * @param energyLimit The maximum amount of energy to be used by the transaction.
+     * @param energyPrice The price per unit of energy to be charged.
+     * @return a new transaction.
+     */
+    public static Transaction contractCreateTransaction(AionAddress sender, byte[] transactionHash, BigInteger senderNonce, BigInteger value, byte[] data, long energyLimit, long energyPrice) {
+        return new Transaction(sender, null, transactionHash, value, senderNonce, energyLimit, energyPrice, data, true);
+    }
+
+    /**
+     * Constructs a new internal transaction that will be a contract-call transaction (this is a
+     * call to a contract or a balance transfer).
+     *
+     * @param sender The sender of the transaction.
+     * @param destination The contract to be called or account to have value transferred to.
+     * @param senderNonce The nonce of the sender.
+     * @param value The amount of value to be transferred from the sender to the destination.
+     * @param data The transaction data.
+     * @param energyLimit The maximum amount of energy to be used by the transaction.
+     * @param energyPrice The price per unit of energy to be charged.
+     * @return a new transaction.
+     */
+    public static Transaction contractCallTransaction(AionAddress sender, AionAddress destination, byte[] transactionHash, BigInteger senderNonce, BigInteger value, byte[] data, long energyLimit, long energyPrice) {
+        if (destination == null) {
+            throw new NullPointerException("Cannot create Call Transaction with null destination!");
+        }
+
+        return new Transaction(sender, destination, transactionHash, value, senderNonce, energyLimit, energyPrice,  data,false);
     }
 
     public byte[] copyOfTransactionHash() {
@@ -94,7 +131,7 @@ public final class Transaction {
         } else {
             Transaction otherObject = (Transaction) obj;
             return this.senderAddress.equals(otherObject.senderAddress)
-                    && this.destinationAddress.equals(otherObject.destinationAddress)
+                    && Objects.equals(this.destinationAddress, otherObject.destinationAddress)
                     && this.value.equals(otherObject.value)
                     && this.nonce.equals(otherObject.nonce)
                     && this.energyPrice == otherObject.energyPrice
@@ -107,7 +144,6 @@ public final class Transaction {
 
     @Override
     public String toString() {
-        String dataString = ByteUtil.bytesToString(transactionData);
         return "TransactionData ["
             + "hash="
             + ByteUtil.bytesToString(transactionHash)
@@ -118,7 +154,7 @@ public final class Transaction {
             + ", value="
             + value
             + ", data="
-            + dataString
+            + ByteUtil.bytesToString(transactionData)
             + ", energyLimit="
             + this.energyLimit
             + ", energyPrice="

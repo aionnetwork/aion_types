@@ -1,62 +1,57 @@
 package org.aion.types;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-
-import java.math.BigInteger;
-import java.util.Arrays;
+import org.aion.types.AionAddress;
+import org.aion.types.Transaction;
 import org.aion.types.test_util.AddressUtil;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.math.BigInteger;
+import java.util.Arrays;
 
-public class TransactionTest {
+import static org.junit.Assert.*;
+
+
+public class CreateTransactionTest {
 
     private AionAddress senderAddress;
-    private AionAddress destinationAddress;
     private byte[] transactionHash;
     private BigInteger value;
     private BigInteger nonce;
     private long energyPrice;
     private long energyLimit;
-    private boolean isCreate;
     private byte[] transactionData;
 
     @Before
     public void setup() {
         senderAddress = AddressUtil.randomAddress();
-        destinationAddress = AddressUtil.randomAddress();
         // For now we're simply providing 32 random bytes as the "hash"
         transactionHash = AddressUtil.randomAddress().toByteArray();
         value = BigInteger.ZERO;
         nonce = BigInteger.ZERO;
         energyPrice = 100_000L;
         energyLimit = 1L;
-        isCreate = false;
         // For now we're simply providing 32 random bytes as the "data"
         transactionData = AddressUtil.randomAddress().toByteArray();
     }
     
     @Test
     public void testConstructor() {
-        Transaction tx = new Transaction(senderAddress, destinationAddress, transactionHash, value, nonce, energyPrice, energyLimit, transactionData);
+        Transaction tx = Transaction.contractCreateTransaction(senderAddress, transactionHash, nonce, value, transactionData, energyLimit, energyPrice);
         assertEquals(tx.senderAddress, senderAddress);
-        assertEquals(tx.destinationAddress, destinationAddress);
         assertEquals(tx.value, value);
         assertEquals(tx.nonce, nonce);
         assertEquals(tx.energyPrice, energyPrice);
         assertEquals(tx.energyLimit, energyLimit);
-        assertEquals(tx.isCreate, isCreate);        
+        assertTrue(tx.isCreate);
         assertArrayEquals(tx.copyOfTransactionHash(), transactionHash);
         assertArrayEquals(tx.copyOfTransactionData(), transactionData);
     }
 
     @Test
     public void testEquals() {
-        Transaction tx1 = new Transaction(senderAddress, destinationAddress, transactionHash, value, nonce, energyPrice, energyLimit, transactionData);
-        Transaction tx2 = new Transaction(senderAddress, destinationAddress, transactionHash, value, nonce, energyPrice, energyLimit, transactionData);
+        Transaction tx1 = Transaction.contractCreateTransaction(senderAddress, transactionHash, nonce, value, transactionData, energyLimit, energyPrice);
+        Transaction tx2 = Transaction.contractCreateTransaction(senderAddress, transactionHash, nonce, value, transactionData, energyLimit, energyPrice);
 
         assertEquals(tx1, tx2);
         assertEquals(tx1.senderAddress, tx2.senderAddress);
@@ -72,20 +67,20 @@ public class TransactionTest {
 
     @Test
     public void testHashCode() {
-        Transaction tx1 = new Transaction(senderAddress, destinationAddress, transactionHash, value, nonce, energyPrice, energyLimit, transactionData);
-        Transaction tx2 = new Transaction(senderAddress, destinationAddress, transactionHash, value, nonce, energyPrice, energyLimit, transactionData);
+        Transaction tx1 = Transaction.contractCreateTransaction(senderAddress, transactionHash, nonce, value, transactionData, energyLimit, energyPrice);
+        Transaction tx2 = Transaction.contractCreateTransaction(senderAddress, transactionHash, nonce, value, transactionData, energyLimit, energyPrice);
 
         assertEquals(tx1.hashCode(), tx2.hashCode());
 
         byte[] senderAddressBytes = senderAddress.toByteArray();
         senderAddressBytes[0] = (byte) ~senderAddressBytes[0];
-        tx2 = new Transaction(new AionAddress(senderAddressBytes), destinationAddress, transactionHash, value, nonce, energyPrice, energyLimit, transactionData);
+        tx2 = Transaction.contractCreateTransaction(new AionAddress(senderAddressBytes), transactionHash, nonce, value, transactionData, energyLimit, energyPrice);
         assertNotEquals(tx1.hashCode(), tx2.hashCode());
     }
 
     @Test
     public void testImmutablity() {
-        Transaction tx1 = new Transaction(senderAddress, destinationAddress, transactionHash, value, nonce, energyPrice, energyLimit, transactionData);
+        Transaction tx1 = Transaction.contractCreateTransaction(senderAddress, transactionHash, nonce, value, transactionData, energyLimit, energyPrice);
 
         // changing the source array of the transactionHash shouldn't change the Transaction object
         transactionHash[0] = (byte) ~transactionHash[0];
@@ -109,42 +104,37 @@ public class TransactionTest {
 
     @Test(expected = NullPointerException.class)
     public void testNullSender() {
-        Transaction tx = new Transaction(null, destinationAddress, transactionHash, value, nonce, energyPrice, energyLimit, transactionData);
-    }
-
-    @Test
-    public void testNullDestination() {
-        Transaction tx = new Transaction(senderAddress, null, transactionHash, value, nonce, energyPrice, energyLimit, transactionData);
+        Transaction tx = Transaction.contractCreateTransaction(null, transactionHash, nonce, value, transactionData, energyLimit, energyPrice);
     }
 
     @Test(expected = NullPointerException.class)
     public void testNullHash() {
-        Transaction tx = new Transaction(senderAddress, destinationAddress, null, value, nonce, energyPrice, energyLimit, transactionData);
+        Transaction tx = Transaction.contractCreateTransaction(senderAddress, null, nonce, value, transactionData, energyLimit, energyPrice);
     }
 
     @Test(expected = NullPointerException.class)
     public void testNullData() {
-        Transaction tx = new Transaction(senderAddress, destinationAddress, transactionHash, value, nonce, energyPrice, energyLimit, null);
+        Transaction tx = Transaction.contractCreateTransaction(senderAddress, transactionHash, nonce, value, null, energyLimit, energyPrice);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNegativeValue() {
-        Transaction tx = new Transaction(senderAddress, destinationAddress, transactionHash, BigInteger.valueOf(-1), nonce, energyPrice, energyLimit, transactionData);
+        Transaction tx = Transaction.contractCreateTransaction(senderAddress, transactionHash, nonce, BigInteger.valueOf(-1), transactionData, energyLimit, energyPrice);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNegativeNonce() {
-        Transaction tx = new Transaction(senderAddress, destinationAddress, transactionHash, value, BigInteger.valueOf(-1), energyPrice, energyLimit, transactionData);
+        Transaction tx = Transaction.contractCreateTransaction(senderAddress, transactionHash, BigInteger.valueOf(-1), value, transactionData, energyLimit, energyPrice);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNegativeEnergyPrice() {
-        Transaction tx = new Transaction(senderAddress, destinationAddress, transactionHash, value, nonce, -1, energyLimit, transactionData);
+        Transaction tx = Transaction.contractCreateTransaction(senderAddress, transactionHash, nonce, value, transactionData, energyLimit, -1);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNegativeEnergyLimit() {
-        Transaction tx = new Transaction(senderAddress, destinationAddress, transactionHash, value, nonce, energyPrice, -1, transactionData);
+        Transaction tx = Transaction.contractCreateTransaction(senderAddress, transactionHash, nonce, value, transactionData, -1, energyPrice);
     }
 
 }
