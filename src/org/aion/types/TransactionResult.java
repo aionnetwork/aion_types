@@ -101,7 +101,7 @@ public final class TransactionResult {
         return "TransactionResult { "
             + "status = " + this.transactionStatus
             + ", energy used = " + this.energyUsed
-            + ", output = " + ByteUtil.bytesToString(this.output)
+            + ", output = " + ((this.output == null) ? "null" : ByteUtil.bytesToString(this.output))
             + ", logs = " + this.logs
             + ", internal transactions = " + this.internalTransactions
             + " }";
