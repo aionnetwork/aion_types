@@ -13,6 +13,8 @@ import org.aion.types.internal_util.ByteUtil;
  *
  * A valid log may have zero or more topics and must always have a non-null address and non-null data.
  *
+ * Each of the topics must be non-null.
+ *
  * A log is immutable.
  */
 public final class Log {
