@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNull;
 import java.math.BigInteger;
 import java.util.Arrays;
 import org.aion.types.InternalTransaction.RejectedStatus;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class InternalTransactionTest {
@@ -181,5 +182,33 @@ public class InternalTransactionTest {
 
         assertArrayEquals(copyOfData, createTransaction.copyOfData());
         assertArrayEquals(copyOfData, callTransaction.copyOfData());
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testInvokableCallWithNull() {
+        InternalTransaction.contractCallInvokableTransaction(STATUS, SENDER, DESTINATION, NONCE, VALUE, DATA, LIMIT, PRICE, null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testInvokableCreateWithNull() {
+        InternalTransaction.contractCreateInvokableTransaction(STATUS, SENDER, NONCE, VALUE, DATA, LIMIT, PRICE, null);
+    }
+
+    @Test
+    public void testInvokableEquality() {
+        InternalTransaction one = InternalTransaction.contractCreateTransaction(STATUS, SENDER, NONCE, VALUE, DATA, LIMIT, PRICE);
+        InternalTransaction two = InternalTransaction.contractCreateTransaction(STATUS, SENDER, NONCE, VALUE, DATA, LIMIT, PRICE);
+        InternalTransaction three = InternalTransaction.contractCreateInvokableTransaction(STATUS, SENDER, NONCE, VALUE, DATA, LIMIT, PRICE, new byte[] {1});
+        InternalTransaction four = InternalTransaction.contractCreateInvokableTransaction(STATUS, SENDER, NONCE, VALUE, DATA, LIMIT, PRICE, new byte[] {1});
+        
+        // Verify equality, as expected, and commutative.
+        assertEquals(one, two);
+        assertEquals(two, one);
+        assertEquals(three, four);
+        assertEquals(four, three);
+        
+        // Verify the inequality, as expected, and commutative.
+        Assert.assertNotEquals(one, three);
+        Assert.assertNotEquals(three, one);
     }
 }

@@ -13,6 +13,7 @@ import org.aion.types.internal_util.ByteUtil;
  */
 public final class InternalTransaction {
     private final byte[] data;
+    private final byte[] hashForInvokableTransaction;
     public final AionAddress sender;
     public final AionAddress destination;
     public final BigInteger senderNonce;
@@ -24,7 +25,7 @@ public final class InternalTransaction {
 
     public enum RejectedStatus { REJECTED, NOT_REJECTED }
 
-    private InternalTransaction(RejectedStatus status, AionAddress sender, AionAddress destination, BigInteger senderNonce, BigInteger value, byte[] data, long energyLimit, long energyPrice, boolean isCreate) {
+    private InternalTransaction(RejectedStatus status, AionAddress sender, AionAddress destination, BigInteger senderNonce, BigInteger value, byte[] data, long energyLimit, long energyPrice, boolean isCreate, byte[] hashForInvokableTransaction) {
         if (status == null) {
             throw new NullPointerException("Cannot create InternalTransaction with null status!");
         }
@@ -62,6 +63,9 @@ public final class InternalTransaction {
         this.isRejected = (status == RejectedStatus.REJECTED);
         this.isCreate = isCreate;
         this.data = copyOf(data);
+        this.hashForInvokableTransaction = (null != hashForInvokableTransaction)
+                ? copyOf(hashForInvokableTransaction)
+                : null;
     }
 
     /**
@@ -79,11 +83,33 @@ public final class InternalTransaction {
      * @return a new internal transaction.
      */
     public static InternalTransaction contractCreateTransaction(RejectedStatus status, AionAddress sender, BigInteger senderNonce, BigInteger value, byte[] data, long energyLimit, long energyPrice) {
-        return new InternalTransaction(status, sender, null, senderNonce, value, data, energyLimit, energyPrice, true);
+        return new InternalTransaction(status, sender, null, senderNonce, value, data, energyLimit, energyPrice, true, null);
     }
 
     /**
-     * Constructs a new internal transaction that will be a contract-call transaction (this is a
+     * Constructs a new invokable (serialized transaction invoked by meta-transaction) that will attempt to create/deploy a new contract.
+     *
+     * This transaction will be marked as rejected only if {@code status == RejectedStatus.REJECTED}.
+     *
+     * @param status Whether this transaction it to be marked as rejected or not.
+     * @param sender The sender of the transaction.
+     * @param senderNonce The nonce of the sender.
+     * @param value The amount of value to be transferred from the sender to the destination.
+     * @param data The transaction data.
+     * @param energyLimit The maximum amount of energy to be used by the transaction.
+     * @param energyPrice The price per unit of energy to be charged.
+     * @param invokableHash The hash of this invokable.
+     * @return a new internal transaction.
+     */
+    public static InternalTransaction contractCreateInvokableTransaction(RejectedStatus status, AionAddress sender, BigInteger senderNonce, BigInteger value, byte[] data, long energyLimit, long energyPrice, byte[] invokableHash) {
+        if (null == invokableHash) {
+            throw new NullPointerException("A serialized invokable MUST have a hash!");
+        }
+        return new InternalTransaction(status, sender, null, senderNonce, value, data, energyLimit, energyPrice, true, invokableHash);
+    }
+
+    /**
+     * Constructs a new invokable (serialized transaction invoked by meta-transaction) that will be a contract-call transaction (this is a
      * call to a contract or a balance transfer).
      *
      * This transaction will be marked as rejected only if {@code status == RejectedStatus.REJECTED}.
@@ -103,7 +129,35 @@ public final class InternalTransaction {
             throw new NullPointerException("Cannot create InternalTransaction with null destination!");
         }
 
-        return new InternalTransaction(status, sender, destination, senderNonce, value, data, energyLimit, energyPrice, false);
+        return new InternalTransaction(status, sender, destination, senderNonce, value, data, energyLimit, energyPrice, false, null);
+    }
+
+    /**
+     * Constructs a new internal meta-transaction that will be a contract-call transaction (this is a
+     * call to a contract or a balance transfer).
+     *
+     * This transaction will be marked as rejected only if {@code status == RejectedStatus.REJECTED}.
+     *
+     * @param status Whether this transaction it to be marked as rejected or not.
+     * @param sender The sender of the transaction.
+     * @param destination The contract to be called or account to have value transferred to.
+     * @param senderNonce The nonce of the sender.
+     * @param value The amount of value to be transferred from the sender to the destination.
+     * @param data The transaction data.
+     * @param energyLimit The maximum amount of energy to be used by the transaction.
+     * @param energyPrice The price per unit of energy to be charged.
+     * @param invokableHash The hash of this invokable.
+     * @return a new internal transaction.
+     */
+    public static InternalTransaction contractCallInvokableTransaction(RejectedStatus status, AionAddress sender, AionAddress destination, BigInteger senderNonce, BigInteger value, byte[] data, long energyLimit, long energyPrice, byte[] invokableHash) {
+        if (destination == null) {
+            throw new NullPointerException("Cannot create InternalTransaction with null destination!");
+        }
+        if (null == invokableHash) {
+            throw new NullPointerException("A serialized invokable MUST have a hash!");
+        }
+
+        return new InternalTransaction(status, sender, destination, senderNonce, value, data, energyLimit, energyPrice, false, invokableHash);
     }
 
     /**
@@ -113,6 +167,17 @@ public final class InternalTransaction {
      */
     public byte[] copyOfData() {
         return copyOf(this.data);
+    }
+
+    /**
+     * Returns a copy of the invokable's hash, null if the receiver is not an invokable.
+     *
+     * @return The invokable's hash or null, if this is not an invokable.
+     */
+    public byte[] copyOfInvokableHash() {
+        return (null != this.hashForInvokableTransaction)
+                ? copyOf(this.hashForInvokableTransaction)
+                : null;
     }
 
     @Override
@@ -133,7 +198,9 @@ public final class InternalTransaction {
             && (this.energyLimit == otherTransaction.energyLimit)
             && (this.energyPrice == otherTransaction.energyPrice)
             && (this.isRejected == otherTransaction.isRejected)
-            && (this.isCreate == otherTransaction.isCreate);
+            && (this.isCreate == otherTransaction.isCreate)
+            && Arrays.equals(this.hashForInvokableTransaction, otherTransaction.hashForInvokableTransaction)
+        ;
     }
 
     @Override
@@ -146,7 +213,9 @@ public final class InternalTransaction {
             + (int) this.energyLimit * 127
             + (int) this.energyPrice * 5
             + ((this.isRejected) ? 1 : 0)
-            + ((this.isCreate) ? 1 : 0);
+            + ((this.isCreate) ? 1 : 0)
+            + Arrays.hashCode(this.hashForInvokableTransaction)
+        ;
     }
 
     @Override
