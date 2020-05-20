@@ -107,7 +107,7 @@ public final class Transaction {
             throw new NullPointerException("Cannot create Call Transaction with null destination!");
         }
 
-        return new Transaction(sender, destination, transactionHash, value, senderNonce, energyLimit, energyPrice,  data,false);
+        return new Transaction(sender, destination, transactionHash, value, senderNonce, energyLimit, energyPrice, data, false);
     }
 
     public byte[] copyOfTransactionHash() {
